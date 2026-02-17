@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    container_name: muslimly_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - CONFIG_FILE=/app/config.yaml
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - TZ=Asia/Jakarta
+    volumes:
+      - ./config.yaml:/root/config.yaml
+      - ./firebase-service-account.json:/root/firebase-service-account.json
+    depends_on:
+      - postgres
+    networks:
+      - muslimly_net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: muslimly_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: Asia/Jakarta
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - muslimly_net
+
+networks:
+  muslimly_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
