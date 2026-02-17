@@ -32,3 +32,5 @@ list_users.json
 vendor/
 go.work
 *.json
+
+cmd/tools/
