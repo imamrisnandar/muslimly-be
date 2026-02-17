@@ -1,0 +1,33 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+bin/
+
+# Logs
+*.log
+
+# Sensitive Files
+config.yaml
+firebase-service-account.json
+.env
+*.env
+
+# Test Data (Contains Tokens/Creds)
+device_test.json
+login.json
+register.json
+activity_test.json
+reading_test_v2.json
+settings_test.json
+sync_test.json
+list_users.json
+
+# IDE
+.vscode/
+.idea/
+
+# Go
+vendor/
+go.work
