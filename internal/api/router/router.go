@@ -30,6 +30,14 @@ func (r *Router) RegisterRoutes(
 ) {
 	v1 := r.echo.Group("/api/v1")
 
+	// Health Check
+	v1.GET("/health", func(c echo.Context) error {
+		return c.JSON(200, map[string]string{
+			"status":  "up",
+			"message": "Muslimly Backend is running 🚀",
+		})
+	})
+
 	// Public Routes (Auth)
 	auth := v1.Group("/auth")
 	{
