@@ -56,6 +56,12 @@ func (s *notificationService) RegisterDevice(userID string, req dto.RegisterDevi
 		UserID:   uid,
 		FCMToken: req.FCMToken,
 		Platform: req.Platform,
+		// Device Metadata
+		DeviceModel:     req.DeviceModel,
+		DeviceOSVersion: req.DeviceOSVersion,
+		AppVersion:      req.AppVersion,
+		CountryCode:     req.CountryCode,
+		Timezone:        req.Timezone,
 	}
 
 	return s.repo.UpsertDevice(device)
