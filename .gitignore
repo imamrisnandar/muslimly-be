@@ -31,3 +31,4 @@ list_users.json
 # Go
 vendor/
 go.work
+*.json
