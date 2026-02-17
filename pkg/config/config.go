@@ -40,6 +40,13 @@ func LoadConfig() *Config {
 	viper.SetConfigFile("config.yaml")
 	viper.AutomaticEnv()
 
+	// Explicit bindings for Docker Env Vars
+	viper.BindEnv("database.host", "DB_HOST")
+	viper.BindEnv("database.user", "DB_USER")
+	viper.BindEnv("database.password", "DB_PASSWORD")
+	viper.BindEnv("database.name", "DB_NAME")
+	viper.BindEnv("server.port", "PORT")
+
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Warning: Config file not found, using defaults based on env or structs")
 	}
