@@ -127,6 +127,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/config-hijri-adjust": {
+            "get": {
+                "description": "Get a list of Hijri adjustments (year-agnostic, by month)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App Config"
+                ],
+                "summary": "Get Hijri adjustment configuration",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AppConfigResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/notifications/register": {
             "post": {
                 "security": [
@@ -156,6 +179,34 @@ const docTemplate = `{
                         }
                     }
                 ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.WebResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notifications/test-broadcast": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Force send daily reminder to all devices",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Trigger Daily Reminder (Debug)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -639,6 +690,20 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.AppConfigResponse": {
+            "type": "object",
+            "properties": {
+                "hijri_adjustment": {
+                    "type": "integer"
+                },
+                "hijri_adjustments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.HijriAdjustmentDTO"
+                    }
+                }
+            }
+        },
         "dto.BulkActivityRequest": {
             "type": "object",
             "required": [
@@ -668,6 +733,17 @@ const docTemplate = `{
                 },
                 "sort": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.HijriAdjustmentDTO": {
+            "type": "object",
+            "properties": {
+                "adjustment": {
+                    "type": "integer"
+                },
+                "hijri_month": {
+                    "type": "integer"
                 }
             }
         },
@@ -770,6 +846,20 @@ const docTemplate = `{
                 "fcm_token"
             ],
             "properties": {
+                "app_version": {
+                    "type": "string"
+                },
+                "country_code": {
+                    "description": "Optional Location Info",
+                    "type": "string"
+                },
+                "device_model": {
+                    "description": "Optional Device Info",
+                    "type": "string"
+                },
+                "device_os_version": {
+                    "type": "string"
+                },
                 "fcm_token": {
                     "type": "string"
                 },
@@ -780,6 +870,9 @@ const docTemplate = `{
                         "ios",
                         "web"
                     ]
+                },
+                "timezone": {
+                    "type": "string"
                 }
             }
         },

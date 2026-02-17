@@ -42,6 +42,15 @@ definitions:
       username:
         type: string
     type: object
+  dto.AppConfigResponse:
+    properties:
+      hijri_adjustment:
+        type: integer
+      hijri_adjustments:
+        items:
+          $ref: '#/definitions/dto.HijriAdjustmentDTO'
+        type: array
+    type: object
   dto.BulkActivityRequest:
     properties:
       activities:
@@ -62,6 +71,13 @@ definitions:
         type: integer
       sort:
         type: string
+    type: object
+  dto.HijriAdjustmentDTO:
+    properties:
+      adjustment:
+        type: integer
+      hijri_month:
+        type: integer
     type: object
   dto.ListUserResponse:
     properties:
@@ -126,6 +142,16 @@ definitions:
     type: object
   dto.RegisterDeviceRequest:
     properties:
+      app_version:
+        type: string
+      country_code:
+        description: Optional Location Info
+        type: string
+      device_model:
+        description: Optional Device Info
+        type: string
+      device_os_version:
+        type: string
       fcm_token:
         type: string
       platform:
@@ -133,6 +159,8 @@ definitions:
         - android
         - ios
         - web
+        type: string
+      timezone:
         type: string
     required:
     - fcm_token
@@ -284,6 +312,21 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /config-hijri-adjust:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Hijri adjustments (year-agnostic, by month)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AppConfigResponse'
+      summary: Get Hijri adjustment configuration
+      tags:
+      - App Config
   /notifications/register:
     post:
       consumes:
@@ -306,6 +349,23 @@ paths:
       security:
       - BearerAuth: []
       summary: Register FCM Device Token
+      tags:
+      - Notification
+  /notifications/test-broadcast:
+    post:
+      consumes:
+      - application/json
+      description: Force send daily reminder to all devices
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Trigger Daily Reminder (Debug)
       tags:
       - Notification
   /sync/activity:

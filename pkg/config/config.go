@@ -11,6 +11,7 @@ type Config struct {
 	Database     DatabaseConfig     `mapstructure:"database"`
 	JWT          JWTConfig          `mapstructure:"jwt"`
 	Notification NotificationConfig `mapstructure:"notification"`
+	AppConfig    AppConfig          `mapstructure:"app_config"`
 }
 
 type ServerConfig struct {
@@ -34,6 +35,10 @@ type JWTConfig struct {
 
 type NotificationConfig struct {
 	FirebaseCredentialsFile string `mapstructure:"firebase_credentials_file"`
+}
+
+type AppConfig struct {
+	HijriAdjustment int `mapstructure:"hijri_adjustment"`
 }
 
 func LoadConfig() *Config {

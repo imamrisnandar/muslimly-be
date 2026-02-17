@@ -11,6 +11,7 @@ RUN go mod download
 # Build the binary
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o seed_hijri ./cmd/tools/seed_hijri_adjustment.go
 
 # Stage 2: Runtime (Minimal)
 FROM alpine:latest
@@ -22,6 +23,7 @@ RUN apk --no-cache add ca-certificates tzdata
 
 # Copy Binary and Configs
 COPY --from=builder /app/main .
+COPY --from=builder /app/seed_hijri .
 # COPY --from=builder /app/firebase-service-account.json . # Don't copy this if using volume mount
 # COPY --from=builder /app/config.yaml . # Don't copy secrets!
 

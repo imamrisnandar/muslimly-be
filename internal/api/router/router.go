@@ -1,6 +1,7 @@
 package router
 
 import (
+	appConfigHandler "muslimly-be/internal/features/app_config/handler"
 	authHandler "muslimly-be/internal/features/auth/handler"
 	notifHandler "muslimly-be/internal/features/notification/handler"
 	syncHandler "muslimly-be/internal/features/sync/handler"
@@ -27,6 +28,7 @@ func (r *Router) RegisterRoutes(
 	syncHandler *syncHandler.SyncHandler,
 	userSettingsHandler *userSettingsHandler.UserSettingsHandler,
 	notifHandler *notifHandler.NotificationHandler,
+	appConfigHandler *appConfigHandler.AppConfigHandler,
 ) {
 	v1 := r.echo.Group("/api/v1")
 
@@ -76,4 +78,7 @@ func (r *Router) RegisterRoutes(
 
 	// Protected Test endpoint
 	notif.POST("/test-broadcast", notifHandler.TestBroadcast, customMiddleware.JWTMiddleware(r.config))
+
+	// App Config (Public)
+	v1.GET("/config-hijri-adjust", appConfigHandler.GetAppConfig)
 }

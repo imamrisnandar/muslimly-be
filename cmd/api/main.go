@@ -34,6 +34,11 @@ import (
 	notifRepo "muslimly-be/internal/features/notification/repository"
 	notifService "muslimly-be/internal/features/notification/service"
 
+	appConfigHandler "muslimly-be/internal/features/app_config/handler"
+	appConfigModel "muslimly-be/internal/features/app_config/model"
+	appConfigRepo "muslimly-be/internal/features/app_config/repository"
+	appConfigService "muslimly-be/internal/features/app_config/service"
+
 	"muslimly-be/pkg/config"
 	"muslimly-be/pkg/database"
 )
@@ -62,7 +67,14 @@ func main() {
 	database.Connect(cfg)
 
 	// 3. Auto Migrate
-	if err := database.DB.AutoMigrate(&userModel.User{}, &syncModel.ReadingHistory{}, &syncModel.ReadingActivity{}, &userSettingsModel.UserSettings{}, &notifModel.UserDevice{}); err != nil {
+	if err := database.DB.AutoMigrate(
+		&userModel.User{},
+		&syncModel.ReadingHistory{},
+		&syncModel.ReadingActivity{},
+		&userSettingsModel.UserSettings{},
+		&notifModel.UserDevice{},
+		&appConfigModel.HijriAdjustment{},
+	); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
@@ -90,6 +102,11 @@ func main() {
 	nRepo := notifRepo.NewDeviceRepository(database.DB)
 	nService := notifService.NewNotificationService(nRepo, cfg)
 	nHandler := notifHandler.NewNotificationHandler(nService)
+
+	// App Config Feature
+	acRepo := appConfigRepo.NewAppConfigRepository(database.DB)
+	acService := appConfigService.NewAppConfigService(cfg, acRepo)
+	acHandler := appConfigHandler.NewAppConfigHandler(acService)
 
 	// 5. Initialize Echo
 	e := echo.New()
@@ -119,7 +136,7 @@ func main() {
 		v1.GET("/health", HealthCheck)
 	}
 	appRouter := router.NewRouter(e, cfg)
-	appRouter.RegisterRoutes(uHandler, aHandler, sHandler, usHandler, nHandler)
+	appRouter.RegisterRoutes(uHandler, aHandler, sHandler, usHandler, nHandler, acHandler)
 
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
