@@ -1,9 +1,0 @@
-{
-  "page": 1,
-  "limit": 10,
-  "filters": {
-    "username": "%User%",
-    "email": "%yopmail%"
-  },
-  "sort": "created_at desc, username asc"
-}
