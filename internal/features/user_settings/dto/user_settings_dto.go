@@ -1,0 +1,15 @@
+package dto
+
+type SettingItem struct {
+	Key   string `json:"key" validate:"required"`
+	Value string `json:"value" validate:"required"`
+}
+
+type UpsertSettingsRequest struct {
+	Settings []SettingItem `json:"settings" validate:"required,dive"`
+}
+
+type SettingResponse struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}

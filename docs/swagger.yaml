@@ -1,0 +1,558 @@
+basePath: /api/v1
+definitions:
+  authdto.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/authdto.UserResponse'
+    type: object
+  authdto.LoginRequest:
+    properties:
+      email:
+        example: user1@yopmail.com
+        type: string
+      password:
+        example: muslimlypass
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  authdto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  authdto.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.BulkActivityRequest:
+    properties:
+      activities:
+        items:
+          $ref: '#/definitions/dto.ReadingActivityRequest'
+        type: array
+    required:
+    - activities
+    type: object
+  dto.GetDataRequest:
+    properties:
+      filters:
+        additionalProperties: true
+        type: object
+      limit:
+        type: integer
+      page:
+        type: integer
+      sort:
+        type: string
+    type: object
+  dto.ListUserResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/dto.UserResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.PaginationMeta'
+    type: object
+  dto.PaginationMeta:
+    properties:
+      current_page:
+        type: integer
+      limit:
+        type: integer
+      total_data:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  dto.ReadingActivityRequest:
+    properties:
+      date:
+        description: YYYY-MM-DD
+        type: string
+      duration_seconds:
+        type: integer
+      end_ayah:
+        type: integer
+      mode:
+        type: string
+      page_number:
+        type: integer
+      start_ayah:
+        type: integer
+      surah_number:
+        type: integer
+      timestamp:
+        type: integer
+      total_ayahs:
+        type: integer
+    required:
+    - date
+    type: object
+  dto.ReadingHistoryResponse:
+    properties:
+      ayah_number:
+        type: integer
+      id:
+        type: string
+      last_read_at:
+        type: string
+      mode:
+        type: string
+      page_number:
+        type: integer
+      surah_id:
+        type: integer
+      user_id:
+        type: string
+    type: object
+  dto.RegisterDeviceRequest:
+    properties:
+      fcm_token:
+        type: string
+      platform:
+        enum:
+        - android
+        - ios
+        - web
+        type: string
+    required:
+    - fcm_token
+    type: object
+  dto.SettingItem:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    required:
+    - key
+    - value
+    type: object
+  dto.SettingResponse:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    required:
+    - id
+    type: object
+  dto.UpsertReadingRequest:
+    properties:
+      ayah_number:
+        type: integer
+      mode:
+        description: '''mushaf'', ''list'''
+        type: string
+      page_number:
+        type: integer
+      surah_id:
+        type: integer
+    required:
+    - ayah_number
+    - surah_id
+    type: object
+  dto.UpsertSettingsRequest:
+    properties:
+      settings:
+        items:
+          $ref: '#/definitions/dto.SettingItem'
+        type: array
+    required:
+    - settings
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  utils.WebResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error_fields: {}
+      message:
+        type: string
+      status:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@muslimly.app
+    name: API Support
+  description: Backend service for Muslimly App (Target Harian, Progress Sync, Notifications).
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Muslimly Backend API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to get JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/authdto.AuthResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with email and password
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authdto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/authdto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /notifications/register:
+    post:
+      consumes:
+      - application/json
+      description: Register device for push notifications
+      parameters:
+      - description: Device Info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Register FCM Device Token
+      tags:
+      - Notification
+  /sync/activity:
+    post:
+      consumes:
+      - application/json
+      description: Upload multiple reading activity logs
+      parameters:
+      - description: Activities
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BulkActivityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Bulk Sync Reading Activities
+      tags:
+      - Sync
+  /sync/reading:
+    get:
+      consumes:
+      - application/json
+      description: Get last 10 reading history items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ReadingHistoryResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get Reading History
+      tags:
+      - Sync
+    post:
+      consumes:
+      - application/json
+      description: Upsert reading history (Last Read Position)
+      parameters:
+      - description: Reading History
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpsertReadingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Sync Reading History
+      tags:
+      - Sync
+  /sync/settings:
+    get:
+      consumes:
+      - application/json
+      description: Get all user settings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.SettingResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get User Settings
+      tags:
+      - Sync
+    post:
+      consumes:
+      - application/json
+      description: Update user settings (key-value pairs)
+      parameters:
+      - description: Settings
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpsertSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Upsert User Settings
+      tags:
+      - Sync
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - User
+    get:
+      consumes:
+      - application/json
+      description: Get single user details
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - User
+  /users/list:
+    post:
+      consumes:
+      - application/json
+      description: Get users with pagination, filter, and sort via Body
+      parameters:
+      - description: Filter Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GetDataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ListUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - User
+  /users/update:
+    put:
+      consumes:
+      - application/json
+      description: Update user details
+      parameters:
+      - description: Update Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.WebResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - User
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,18 @@
+server:
+  port: ":8080"
+
+database:
+  host: "localhost"
+  port: "5432"
+  user: "postgres"
+  password: "P@ssw0rd"
+  name: "muslimly"
+  sslmode: "disable"
+  timezone: "Asia/Jakarta"
+
+jwt:
+  secret: "supersecretkey"
+  expiration_hours: 24
+
+notification:
+  firebase_credentials_file: "firebase-service-account.json"

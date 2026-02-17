@@ -1,0 +1,22 @@
+{
+  "activities": [
+    {
+      "date": "2026-02-16",
+      "duration_seconds": 300,
+      "page_number": 1,
+      "surah_number": 1,
+      "start_ayah": 1,
+      "end_ayah": 7,
+      "total_ayahs": 7,
+      "mode": "ayah",
+      "timestamp": 1742460000
+    },
+    {
+      "date": "2026-02-16",
+      "duration_seconds": 600,
+      "page_number": 2,
+      "mode": "page",
+      "timestamp": 1742461000
+    }
+  ]
+}
