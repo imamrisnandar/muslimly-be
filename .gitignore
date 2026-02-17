@@ -34,3 +34,4 @@ go.work
 *.json
 
 cmd/tools/
+docker-compose.prod.yml
