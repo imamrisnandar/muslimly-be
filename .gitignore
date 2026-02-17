@@ -13,6 +13,7 @@ config.yaml
 firebase-service-account.json
 .env
 *.env
+.secrets
 
 # Test Data (Contains Tokens/Creds)
 device_test.json

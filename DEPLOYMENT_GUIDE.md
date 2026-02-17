@@ -10,12 +10,15 @@ Sebelum mulai, pastikan Anda memiliki:
 
 1.  **VPS (Ubuntu 22.04/24.04)**: Minimal 1GB RAM.
 2.  **Domain**: Terhubung ke IP VPS (A Record). Contoh: `muslimly.my.id`.
-3.  **Local Tools**:
+3.  **User VPS**: `lighthouse` (Tencent Cloud default) dengan akses sudo.
+4.  **Local Tools**:
     - Terminal (PowerShell/Bash)
     - Database Client (DBeaver / PgAdmin / TablePlus)
     - SSH Client (OpenSSH)
-4.  **File Rahasia (Local)**:
-    - `docker-compose.prod.yml` (Config Production)
+5.  **File Rahasia (Local)**:
+    - `cmd/tools/vps_key.pem` (Private Key SSH - **Jangan Commit ke Git!**)
+    - `.secrets` (Database Credentials - **Jangan Commit ke Git!**)
+    - `docker-compose.prod.yml` (Config Production + Security Fixes)
     - `config.yaml` (App Config)
     - `firebase-service-account.json` (Firebase Admin SDK)
 
@@ -182,114 +185,48 @@ Isi crontab (`crontab -e`) untuk otomatis renew:
 
 ---
 
-## ⚡ Bonus: Script Deploy Otomatis (Golang)
+## ⚡ Bonus: Utility Scripts (cmd/tools)
 
-Jika malas menjalankan command manual berulang kali, simpan script ini sebagai `deploy_tools.go` di laptop Anda.
-Script ini akan:
+Untuk mempermudah manajemen server, telah disediakan 5 script Golang di folder `cmd/tools`. Anda bisa menjalankannya dari laptop lokal:
 
-1.  Mengupload file config terbaru.
-2.  Upload `docker-compose.prod.yml` (sebagai `docker-compose.yml`).
-3.  Merestart container di VPS.
+### 1. `deploy_vps.go` (Setup Awal)
 
-### Script (`deploy_tools.go`)
-
-```go
-package main
-
-import (
-    "fmt"
-    "io"
-    "log"
-    "os"
-    "time"
-
-    "golang.org/x/crypto/ssh"
-)
-
-const (
-    // GANTI BAGIAN INI DENGAN DATA ANDA
-    VPS_IP       = "43.134.180.17"
-    VPS_USER     = "root"
-    VPS_PASSWORD = "PASSWORD_VPS_ANDA" // Atau gunakan ssh.PublicKeys jika ada key file
-    APP_DIR      = "/root/muslimly-be"
-)
-
-func main() {
-    config := &ssh.ClientConfig{
-        User: VPS_USER,
-        Auth: []ssh.AuthMethod{
-            ssh.Password(VPS_PASSWORD),
-        },
-        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-        Timeout:         10 * time.Second,
-    }
-
-    client, err := ssh.Dial("tcp", VPS_IP+":22", config)
-    if err != nil {
-        log.Fatalf("Failed to dial: %v", err)
-    }
-    defer client.Close()
-
-    fmt.Println("--- Connected to VPS ---")
-
-    // 1. Upload Configs
-    fmt.Println("\n[1] Uploading Configs...")
-    uploadFile(client, "config.yaml", APP_DIR+"/config.yaml")
-
-    // Upload Prod Compose as default compose
-    uploadFile(client, "docker-compose.prod.yml", APP_DIR+"/docker-compose.yml")
-
-
-    // 2. Restart Stack
-    fmt.Println("\n[2] Restarting Stack...")
-    runCommand(client, "cd "+APP_DIR+" && docker compose down --remove-orphans")
-    runCommand(client, "cd "+APP_DIR+" && docker compose up -d --build")
-
-    // 3. Status
-    fmt.Println("\n[3] Checking Status...")
-    time.Sleep(5 * time.Second)
-    runCommand(client, "docker ps")
-}
-
-func runCommand(client *ssh.Client, cmd string) {
-    session, err := client.NewSession()
-    if err != nil {
-        log.Fatalf("Failed: %v", err)
-    }
-    defer session.Close()
-    session.Stdout = os.Stdout
-    session.Stderr = os.Stderr
-    if err := session.Run(cmd); err != nil {
-        log.Printf("Cmd error: %v", err)
-    }
-}
-
-func uploadFile(client *ssh.Client, localPath, remotePath string) {
-    f, err := os.Open(localPath)
-    if err != nil {
-        log.Fatalf("Open failed: %v", err)
-    }
-    defer f.Close()
-    session, err := client.NewSession()
-    defer session.Close()
-
-    go func() {
-        w, _ := session.StdinPipe()
-        defer w.Close()
-        io.Copy(w, f)
-    }()
-
-    // Simple cat method
-    if err := session.Run("cat > " + remotePath); err != nil {
-        log.Fatalf("Upload failed: %v", err)
-    }
-}
-```
-
-**Cara Pakai:**
+Script untuk inisialisasi server baru. Melakukan instalasi Docker, Nginx, dan setup environment dasar.
 
 ```bash
-go run deploy_tools.go
+go run cmd/tools/deploy_vps.go
+```
+
+### 2. `deploy_update.go` (Update Harian)
+
+Script standar untuk deploy update code. Melakukan `git pull` dan `docker compose build`. Gunakan ini jika Anda push perubahan code ke GitHub.
+
+```bash
+go run cmd/tools/deploy_update.go
+```
+
+### 3. `deploy_reset.go` (Emergency Reset)
+
+Script darurat jika terjadi konflik file di server. Melakukan `git reset --hard` untuk memaksa file di server sama persis dengan GitHub, lalu rebuild.
+
+```bash
+go run cmd/tools/deploy_reset.go
+```
+
+### 4. `check_health.go` (Validasi & Health Check)
+
+Script untuk mengecek status deployment. Menampilkan status container, log error terakhir, schema database, dan mengetes endpoint API `/health`.
+
+```bash
+go run cmd/tools/check_health.go
+```
+
+### 5. `setup_ssl_robust.go` (Setup SSL)
+
+Script khusus untuk install atau memperbaiki sertifikat SSL (HTTPS) menggunakan Certbot.
+
+```bash
+go run cmd/tools/setup_ssl_robust.go
 ```
 
 ---
