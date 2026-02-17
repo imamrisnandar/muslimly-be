@@ -1,93 +1,306 @@
-# Cara Deploy ke VPS (Secure & Proper) 🚀
+# 🚀 Muslimly Backend - Full Deployment Guide
 
-Guide ini akan membantu Anda men-deploy **Muslimly Backend** ke VPS (Ubuntu/Debian) menggunakan Docker.
+Panduan lengkap untuk men-deploy, mengamankan, dan memonitoring Muslimly Backend di VPS Production.
 
-## Persiapan
+---
 
-1.  **VPS (Virtual Private Server)**: OS Ubuntu 22.04 / 24.04.
-2.  **Domain**: (Optional tapi Recommended) misal `api.muslimly.my.id`.
-3.  **File Rahasia**: Pastikan Anda punya backup `config.yaml` dan `firebase-service-account.json` di Laptop.
+## 🛠️ 1. Persiapan (Prerequisites)
 
-## Langkah 1: Install Docker di VPS
+Sebelum mulai, pastikan Anda memiliki:
 
-Login ke VPS via SSH, lalu jalankan:
+1.  **VPS (Ubuntu 22.04/24.04)**: Minimal 1GB RAM.
+2.  **Domain**: Terhubung ke IP VPS (A Record). Contoh: `muslimly.my.id`.
+3.  **Local Tools**:
+    - Terminal (PowerShell/Bash)
+    - Database Client (DBeaver / PgAdmin / TablePlus)
+    - SSH Client (OpenSSH)
+4.  **File Rahasia (Local)**:
+    - `docker-compose.prod.yml` (Config Production)
+    - `config.yaml` (App Config)
+    - `firebase-service-account.json` (Firebase Admin SDK)
+
+---
+
+## 📦 2. Deployment Step-by-Step
+
+### Step 1: Install Docker & Docker Compose (di VPS)
+
+Login ke VPS (`ssh root@IP_VPS`) dan jalankan:
 
 ```bash
-# Update Repo
+# Update System
 sudo apt update && sudo apt upgrade -y
 
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Install Docker Compose
+# Install Docker Compose Plugin
 sudo apt install -y docker-compose-plugin
 ```
 
-## Langkah 2: Clone Repository
+### Step 2: Clone Repository
 
 ```bash
 git clone https://github.com/imamrisnandar/muslimly-be.git
 cd muslimly-be
 ```
 
-## Langkah 3: Upload File Rahasia (PENTING!)
+### Step 3: Upload Konfigurasi Aman (Dari Local Laptop)
 
-Karena file ini tidak ada di GitHub (gitignore), Anda harus upload manual dari Laptop ke VPS.
-
-**Cara Upload (Dari Laptop):**
-Buka Terminal/CMD di folder project laptop, lalu jalankan `scp`:
+File konfigurasi sensitif **TIDAK BOLEH** ada di GitHub. Upload manual dari laptop Anda menggunakan `scp`:
 
 ```powershell
-# Upload Config
-scp config.yaml root@IP_VPS:/root/muslimly-be/
+# Ganti IP_VPS dengan IP Server Anda
+$VPS_IP = "43.134.180.17"
 
-# Upload Firebase Key
-scp firebase-service-account.json root@IP_VPS:/root/muslimly-be/
+# 1. Upload App Config & Firebase Key
+scp config.yaml root@$VPS_IP:/root/muslimly-be/
+scp firebase-service-account.json root@$VPS_IP:/root/muslimly-be/
+
+# 2. Upload Production Docker Compose (Rename jadi docker-compose.yml di server)
+scp docker-compose.prod.yml root@$VPS_IP:/root/muslimly-be/docker-compose.yml
 ```
 
-_(Ganti `IP_VPS` dengan IP Server Anda)_.
+> **Note**: `docker-compose.prod.yml` berisi password asli database. File ini di-ignore oleh git agar aman.
 
-## Langkah 4: Setup Environment Variable
+### Step 4: Setup SSL / HTTPS (Nginx & Certbot)
 
-Di VPS, buat file `.env` untuk password database:
+Di dalam repo sudah ada folder `nginx/` dan `certbot/`.
 
-```bash
-nano .env
-```
+1.  **Jalankan Stack**:
 
-Isi dengan:
+    ```bash
+    cd ~/muslimly-be
+    docker compose up -d
+    ```
 
-```env
-DB_USER=postgres
-DB_PASSWORD=PasswordRahasiaAnda123
-DB_NAME=muslimly
-```
+2.  **Request Certificate (Pertama Kali)**:
+    Jika sertifikat belum ada, jalankan perintah ini untuk meminta ke Let's Encrypt:
 
-_(Simpan dengan CTRL+O, Enter, CTRL+X)_
+    ```bash
+    docker compose run --rm certbot certonly --webroot --webroot-path /var/www/certbot -d muslimly.my.id
+    ```
 
-## Langkah 5: Jalankan Server 🚀
+    _(Ikuti instruksi di layar, pilih Agree)._
 
-```bash
-docker compose up -d --build
-```
+3.  **Restart Nginx** untuk memuat sertifikat:
+    ```bash
+    docker compose restart nginx
+    ```
 
-Cek status:
+---
+
+## 🗄️ 3. Cara Akses Database (Secure Access)
+
+Database PostgreSQL di VPS **TIDAK** diekspos ke internet publik (Port 5432 ditutup firewall/docker bind). Anda **WAJIB** menggunakan **SSH Tunnel**.
+
+### Konfigurasi DBeaver / PgAdmin / TablePlus:
+
+**Tab SSH / SSH Tunnel:**
+
+- **Host/IP**: `IP_VPS` (ex: 43.134.180.17)
+- **Port**: `22`
+- **Username**: `root`
+- **Password**: _(Password VPS Anda)_
+
+**Tab General / Connection:**
+
+- **Host**: `localhost` (Karena kita masuk lewat tunnel, bagi tunnel ini adalah localhost server)
+- **Port**: `5432`
+- **Database**: `muslimly`
+- **Username**: `postgres`
+- **Password**: `Mu5l1mlyJ4nn4h` (Atau sesuai isi `docker-compose.prod.yml`)
+
+---
+
+## 📊 4. Monitoring Server
+
+### Cek Status Container
+
+Lihat apakah semua service (backend, db, nginx) berjalan:
 
 ```bash
 docker compose ps
-# Pastikan status "Up"
+# Status harus "Up" atau "Up (healthy)"
 ```
 
-Cek logs:
+### Cek Resource Usage (CPU/RAM)
+
+Lihat beban server realtime:
 
 ```bash
-docker compose logs -f app
+docker stats
 ```
 
-## Langkah 6: (Optional) Setup SSL dengan Nginx & Certbot
+### Cek Logs (Debugging)
 
-Jika sudah punya domain, install Nginx Proxy Manager atau Caddy agar HTTPS aktif.
+Melihat log aplikasi backend:
 
-Selesai! API Anda sekarang aktif di `http://IP_VPS:8080`.
-Jangan lupa update IP ini di source code Flutter (`network_module.dart`).
+```bash
+docker compose logs -f app --tail 100
+```
+
+Melihat log Nginx (Access/Error):
+
+```bash
+docker compose logs -f nginx --tail 100
+```
+
+Melihat log Database:
+
+```bash
+docker compose logs -f db --tail 100
+```
+
+---
+
+## 🔄 5. Maintenance & Update
+
+### Cara Update Aplikasi (Backend)
+
+Jika ada update code di GitHub:
+
+1.  **Pull Code**:
+    ```bash
+    cd ~/muslimly-be
+    git pull origin main
+    ```
+2.  **Rebuild & Restart**:
+    ```bash
+    docker compose up -d --build app
+    ```
+    _(Hanya service `app` yang direstart, database aman)_.
+
+### Cara Renew SSL (Setiap 2-3 Bulan)
+
+Isi crontab (`crontab -e`) untuk otomatis renew:
+
+```bash
+0 0 1 * * docker compose run --rm certbot renew && docker compose restart nginx
+```
+
+---
+
+## ⚡ Bonus: Script Deploy Otomatis (Golang)
+
+Jika malas menjalankan command manual berulang kali, simpan script ini sebagai `deploy_tools.go` di laptop Anda.
+Script ini akan:
+
+1.  Mengupload file config terbaru.
+2.  Upload `docker-compose.prod.yml` (sebagai `docker-compose.yml`).
+3.  Merestart container di VPS.
+
+### Script (`deploy_tools.go`)
+
+```go
+package main
+
+import (
+    "fmt"
+    "io"
+    "log"
+    "os"
+    "time"
+
+    "golang.org/x/crypto/ssh"
+)
+
+const (
+    // GANTI BAGIAN INI DENGAN DATA ANDA
+    VPS_IP       = "43.134.180.17"
+    VPS_USER     = "root"
+    VPS_PASSWORD = "PASSWORD_VPS_ANDA" // Atau gunakan ssh.PublicKeys jika ada key file
+    APP_DIR      = "/root/muslimly-be"
+)
+
+func main() {
+    config := &ssh.ClientConfig{
+        User: VPS_USER,
+        Auth: []ssh.AuthMethod{
+            ssh.Password(VPS_PASSWORD),
+        },
+        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+        Timeout:         10 * time.Second,
+    }
+
+    client, err := ssh.Dial("tcp", VPS_IP+":22", config)
+    if err != nil {
+        log.Fatalf("Failed to dial: %v", err)
+    }
+    defer client.Close()
+
+    fmt.Println("--- Connected to VPS ---")
+
+    // 1. Upload Configs
+    fmt.Println("\n[1] Uploading Configs...")
+    uploadFile(client, "config.yaml", APP_DIR+"/config.yaml")
+
+    // Upload Prod Compose as default compose
+    uploadFile(client, "docker-compose.prod.yml", APP_DIR+"/docker-compose.yml")
+
+
+    // 2. Restart Stack
+    fmt.Println("\n[2] Restarting Stack...")
+    runCommand(client, "cd "+APP_DIR+" && docker compose down --remove-orphans")
+    runCommand(client, "cd "+APP_DIR+" && docker compose up -d --build")
+
+    // 3. Status
+    fmt.Println("\n[3] Checking Status...")
+    time.Sleep(5 * time.Second)
+    runCommand(client, "docker ps")
+}
+
+func runCommand(client *ssh.Client, cmd string) {
+    session, err := client.NewSession()
+    if err != nil {
+        log.Fatalf("Failed: %v", err)
+    }
+    defer session.Close()
+    session.Stdout = os.Stdout
+    session.Stderr = os.Stderr
+    if err := session.Run(cmd); err != nil {
+        log.Printf("Cmd error: %v", err)
+    }
+}
+
+func uploadFile(client *ssh.Client, localPath, remotePath string) {
+    f, err := os.Open(localPath)
+    if err != nil {
+        log.Fatalf("Open failed: %v", err)
+    }
+    defer f.Close()
+    session, err := client.NewSession()
+    defer session.Close()
+
+    go func() {
+        w, _ := session.StdinPipe()
+        defer w.Close()
+        io.Copy(w, f)
+    }()
+
+    // Simple cat method
+    if err := session.Run("cat > " + remotePath); err != nil {
+        log.Fatalf("Upload failed: %v", err)
+    }
+}
+```
+
+**Cara Pakai:**
+
+```bash
+go run deploy_tools.go
+```
+
+---
+
+## 🚨 Troubleshooting
+
+**Q: Database Connection Refused?**
+A: Pastikan di `docker list`, container `muslimly_db` statusnya Up. Cek logs: `docker logs muslimly_db`.
+
+**Q: Website HTTPS Error?**
+A: Cek masa berlaku sertifikat. Cek log nginx: `docker logs muslimly_nginx`. Pastikan port 443 terbuka di Firewall VPS.
+
+**Q: Aplikasi Error "Connection Refused" ke DB?**
+A: Pastikan di `config.yaml` dan `docker-compose.yml`, `DB_HOST` diset ke nama service container (`muslimly_db`), bukan localhost.
