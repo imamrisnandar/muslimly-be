@@ -2,6 +2,7 @@ package router
 
 import (
 	appConfigHandler "muslimly-be/internal/features/app_config/handler"
+	"muslimly-be/internal/features/article/handler"
 	authHandler "muslimly-be/internal/features/auth/handler"
 	notifHandler "muslimly-be/internal/features/notification/handler"
 	syncHandler "muslimly-be/internal/features/sync/handler"
@@ -29,6 +30,7 @@ func (r *Router) RegisterRoutes(
 	userSettingsHandler *userSettingsHandler.UserSettingsHandler,
 	notifHandler *notifHandler.NotificationHandler,
 	appConfigHandler *appConfigHandler.AppConfigHandler,
+	articleHandler *handler.ArticleHandler,
 ) {
 	v1 := r.echo.Group("/api/v1")
 
@@ -40,6 +42,7 @@ func (r *Router) RegisterRoutes(
 		})
 	})
 
+	// ... (Auth Routes) ...
 	// Public Routes (Auth)
 	auth := v1.Group("/auth")
 	{
@@ -81,4 +84,7 @@ func (r *Router) RegisterRoutes(
 
 	// App Config (Public)
 	v1.GET("/config-hijri-adjust", appConfigHandler.GetAppConfig)
+
+	// Article (Public)
+	v1.GET("/articles", articleHandler.GetArticles)
 }

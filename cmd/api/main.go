@@ -39,6 +39,10 @@ import (
 	appConfigRepo "muslimly-be/internal/features/app_config/repository"
 	appConfigService "muslimly-be/internal/features/app_config/service"
 
+	articleHandler "muslimly-be/internal/features/article/handler"
+	articleRepo "muslimly-be/internal/features/article/repository"
+	articleService "muslimly-be/internal/features/article/service"
+
 	"muslimly-be/pkg/config"
 	"muslimly-be/pkg/database"
 )
@@ -60,7 +64,7 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	// 1. Load Config
+	// 1. LoadConfig
 	cfg := config.LoadConfig()
 
 	// 2. Connect Database
@@ -74,6 +78,7 @@ func main() {
 		&userSettingsModel.UserSettings{},
 		&notifModel.UserDevice{},
 		&appConfigModel.HijriAdjustment{},
+		&articleRepo.Article{},
 	); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
@@ -108,6 +113,11 @@ func main() {
 	acService := appConfigService.NewAppConfigService(cfg, acRepo)
 	acHandler := appConfigHandler.NewAppConfigHandler(acService)
 
+	// Article Feature
+	artRepo := articleRepo.NewArticleRepository(database.DB)
+	artService := articleService.NewArticleService(artRepo)
+	artHandler := articleHandler.NewArticleHandler(artService)
+
 	// 5. Initialize Echo
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -136,7 +146,7 @@ func main() {
 		v1.GET("/health", HealthCheck)
 	}
 	appRouter := router.NewRouter(e, cfg)
-	appRouter.RegisterRoutes(uHandler, aHandler, sHandler, usHandler, nHandler, acHandler)
+	appRouter.RegisterRoutes(uHandler, aHandler, sHandler, usHandler, nHandler, acHandler, artHandler)
 
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
