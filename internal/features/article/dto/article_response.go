@@ -16,4 +16,5 @@ type ArticleResponse struct {
 type ArticleFilter struct {
 	Limit  int
 	Offset int
+	Search string
 }

@@ -26,6 +26,7 @@ func NewArticleHandler(service service.ArticleService) *ArticleHandler {
 // @Param        limit   query     int  false  "Limit (default 10)"
 // @Param        offset  query     int  false  "Offset (default 0)"
 // @Param        lang    query     string  false  "Language (default 'id')"
+// @Param        search  query     string  false  "Search keyword"
 // @Success      200     {array}   dto.ArticleResponse
 // @Router       /articles [get]
 func (h *ArticleHandler) GetArticles(c echo.Context) error {
@@ -35,8 +36,9 @@ func (h *ArticleHandler) GetArticles(c echo.Context) error {
 	}
 	offset, _ := strconv.Atoi(c.QueryParam("offset"))
 	lang := c.QueryParam("lang")
+	search := c.QueryParam("search")
 
-	articles, err := h.service.GetArticles(limit, offset, lang)
+	articles, err := h.service.GetArticles(limit, offset, lang, search)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch articles"})
 	}

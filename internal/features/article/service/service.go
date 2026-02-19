@@ -6,7 +6,7 @@ import (
 )
 
 type ArticleService interface {
-	GetArticles(limit, offset int, lang string) ([]dto.ArticleResponse, error)
+	GetArticles(limit, offset int, lang, search string) ([]dto.ArticleResponse, error)
 }
 
 type articleService struct {
@@ -17,7 +17,7 @@ func NewArticleService(repo repository.ArticleRepository) ArticleService {
 	return &articleService{repo: repo}
 }
 
-func (s *articleService) GetArticles(limit, offset int, lang string) ([]dto.ArticleResponse, error) {
+func (s *articleService) GetArticles(limit, offset int, lang, search string) ([]dto.ArticleResponse, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -25,6 +25,7 @@ func (s *articleService) GetArticles(limit, offset int, lang string) ([]dto.Arti
 	filter := dto.ArticleFilter{
 		Limit:  limit,
 		Offset: offset,
+		Search: search,
 	}
 
 	articles, err := s.repo.FindAll(filter)

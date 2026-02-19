@@ -54,6 +54,12 @@ const docTemplate = `{
                         "description": "Language (default 'id')",
                         "name": "lang",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search keyword",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
