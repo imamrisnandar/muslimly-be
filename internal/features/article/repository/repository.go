@@ -13,6 +13,10 @@ type Article struct {
 	Content       string
 	Summary       string
 	Category      string
+	TitleEn       string
+	ContentEn     string
+	SummaryEn     string
+	CategoryEn    string
 	Author        string
 	PublishedAt   time.Time
 	ValidFrom     *time.Time

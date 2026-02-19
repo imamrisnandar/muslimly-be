@@ -6,7 +6,7 @@ import (
 )
 
 type ArticleService interface {
-	GetArticles(limit, offset int) ([]dto.ArticleResponse, error)
+	GetArticles(limit, offset int, lang string) ([]dto.ArticleResponse, error)
 }
 
 type articleService struct {
@@ -17,7 +17,7 @@ func NewArticleService(repo repository.ArticleRepository) ArticleService {
 	return &articleService{repo: repo}
 }
 
-func (s *articleService) GetArticles(limit, offset int) ([]dto.ArticleResponse, error) {
+func (s *articleService) GetArticles(limit, offset int, lang string) ([]dto.ArticleResponse, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -34,12 +34,34 @@ func (s *articleService) GetArticles(limit, offset int) ([]dto.ArticleResponse, 
 
 	var responses []dto.ArticleResponse
 	for _, article := range articles {
+		// Default to Indonesian
+		title := article.Title
+		content := article.Content
+		summary := article.Summary
+		category := article.Category
+
+		// Override with English if requested and available
+		if lang == "en" {
+			if article.TitleEn != "" {
+				title = article.TitleEn
+			}
+			if article.ContentEn != "" {
+				content = article.ContentEn
+			}
+			if article.SummaryEn != "" {
+				summary = article.SummaryEn
+			}
+			if article.CategoryEn != "" {
+				category = article.CategoryEn
+			}
+		}
+
 		responses = append(responses, dto.ArticleResponse{
 			ID:            article.ID,
-			Title:         article.Title,
-			Content:       article.Content,
-			Summary:       article.Summary,
-			Category:      article.Category,
+			Title:         title,
+			Content:       content,
+			Summary:       summary,
+			Category:      category,
 			Author:        article.Author,
 			PublishedAt:   article.PublishedAt,
 			OrderPriority: article.OrderPriority,
