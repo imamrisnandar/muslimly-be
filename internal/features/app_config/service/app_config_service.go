@@ -37,7 +37,7 @@ func (s *appConfigService) GetAppConfig() (dto.AppConfigResponse, error) {
 	}
 
 	return dto.AppConfigResponse{
-		HijriAdjustment:  s.cfg.AppConfig.HijriAdjustment, // Keep for backward compatibility or global default
+		HijriAdjustment:  0, // Keep for backward compatibility or global default
 		HijriAdjustments: dtos,
 	}, nil
 }

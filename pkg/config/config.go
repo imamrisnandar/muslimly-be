@@ -11,7 +11,7 @@ type Config struct {
 	Database     DatabaseConfig     `mapstructure:"database"`
 	JWT          JWTConfig          `mapstructure:"jwt"`
 	Notification NotificationConfig `mapstructure:"notification"`
-	AppConfig    AppConfig          `mapstructure:"app_config"`
+	RateLimit    RateLimitConfig    `mapstructure:"rate_limit"`
 }
 
 type ServerConfig struct {
@@ -37,8 +37,11 @@ type NotificationConfig struct {
 	FirebaseCredentialsFile string `mapstructure:"firebase_credentials_file"`
 }
 
-type AppConfig struct {
-	HijriAdjustment int `mapstructure:"hijri_adjustment"`
+type RateLimitConfig struct {
+	Global int `mapstructure:"global"`
+	Auth   int `mapstructure:"auth"`
+	Public int `mapstructure:"public"`
+	Sync   int `mapstructure:"sync"`
 }
 
 func LoadConfig() *Config {

@@ -12,6 +12,7 @@ import (
 	customMiddleware "muslimly-be/pkg/middleware"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Router struct {
@@ -43,8 +44,13 @@ func (r *Router) RegisterRoutes(
 	})
 
 	// ... (Auth Routes) ...
-	// Public Routes (Auth)
+	// Public Routes (Auth) - Limit: 10/min (or config)
+	authRate := r.config.RateLimit.Auth
+	if authRate == 0 {
+		authRate = 10
+	}
 	auth := v1.Group("/auth")
+	auth.Use(middleware.RateLimiterWithConfig(customMiddleware.RateLimitConfig(authRate)))
 	{
 		auth.POST("/register", authHandler.Register)
 		auth.POST("/login", authHandler.Login)
@@ -63,6 +69,14 @@ func (r *Router) RegisterRoutes(
 	// Protected Routes (Sync)
 	sync := v1.Group("/sync")
 	sync.Use(customMiddleware.JWTMiddleware(r.config))
+
+	// Sync Limit (User Based)
+	syncRate := r.config.RateLimit.Sync
+	if syncRate == 0 {
+		syncRate = 20
+	}
+	sync.Use(middleware.RateLimiterWithConfig(customMiddleware.UserRateLimitConfig(syncRate)))
+
 	{
 		// Reading History
 		sync.POST("/reading", syncHandler.UpsertReading)
@@ -85,6 +99,10 @@ func (r *Router) RegisterRoutes(
 	// App Config (Public)
 	v1.GET("/config-hijri-adjust", appConfigHandler.GetAppConfig)
 
-	// Article (Public)
-	v1.GET("/articles", articleHandler.GetArticles)
+	// Article (Public) - Limit: 100/min (or config)
+	publicRate := r.config.RateLimit.Public
+	if publicRate == 0 {
+		publicRate = 100
+	}
+	v1.GET("/articles", articleHandler.GetArticles, middleware.RateLimiterWithConfig(customMiddleware.RateLimitConfig(publicRate)))
 }
