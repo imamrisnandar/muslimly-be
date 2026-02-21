@@ -9,9 +9,9 @@ import (
 
 type ReadingHistory struct {
 	ID         uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID     *uuid.UUID `gorm:"type:uuid;index"` // Nullable for guest
-	DeviceID   *uuid.UUID `gorm:"type:uuid;index"` // Links to user_devices.id
-	SurahID    int        `gorm:"not null"`
+	UserID     *uuid.UUID `gorm:"type:uuid;uniqueIndex:idx_rh_user_surah,where:user_id IS NOT NULL"`     // Nullable for guest
+	DeviceID   *uuid.UUID `gorm:"type:uuid;uniqueIndex:idx_rh_device_surah,where:device_id IS NOT NULL"` // Links to user_devices.id
+	SurahID    int        `gorm:"not null;uniqueIndex:idx_rh_user_surah;uniqueIndex:idx_rh_device_surah"`
 	AyahNumber int        `gorm:"not null"`
 	PageNumber int        `gorm:"default:0"`
 	Mode       string     `gorm:"default:'mushaf'"`     // 'mushaf' or 'list'
