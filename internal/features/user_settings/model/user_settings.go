@@ -8,9 +8,11 @@ import (
 )
 
 type UserSettings struct {
-	UserID    uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Key       string    `gorm:"primaryKey"`
-	Value     string    `gorm:"type:text"`
+	ID        uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID    *uuid.UUID `gorm:"type:uuid;index:idx_user_settings_unique,unique"`
+	DeviceID  *uuid.UUID `gorm:"type:uuid;index:idx_user_settings_unique,unique"`
+	Key       string     `gorm:"index:idx_user_settings_unique,unique;not null"`
+	Value     string     `gorm:"type:text"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

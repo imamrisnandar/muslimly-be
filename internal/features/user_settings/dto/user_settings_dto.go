@@ -6,6 +6,7 @@ type SettingItem struct {
 }
 
 type UpsertSettingsRequest struct {
+	DeviceID string        `json:"device_id,omitempty"`
 	Settings []SettingItem `json:"settings" validate:"required,dive"`
 }
 

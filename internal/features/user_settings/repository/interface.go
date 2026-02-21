@@ -6,5 +6,5 @@ import (
 
 type UserSettingsRepository interface {
 	UpsertSettings(settings []model.UserSettings) error
-	GetSettings(userID string) ([]model.UserSettings, error)
+	GetSettings(userID, deviceID string) ([]model.UserSettings, error)
 }

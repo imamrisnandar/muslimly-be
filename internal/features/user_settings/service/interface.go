@@ -5,6 +5,6 @@ import (
 )
 
 type UserSettingsService interface {
-	UpsertSettings(userID string, req dto.UpsertSettingsRequest) error
-	GetSettings(userID string) ([]dto.SettingResponse, error)
+	UpsertSettings(userID, deviceID string, req dto.UpsertSettingsRequest) error
+	GetSettings(userID, deviceID string) ([]dto.SettingResponse, error)
 }

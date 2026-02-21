@@ -35,7 +35,12 @@ func (h *UserSettingsHandler) UpsertSettings(c echo.Context) error {
 		return utils.ResponseError(c, http.StatusBadRequest, utils.ErrInvalidRequest, nil)
 	}
 
-	if err := h.service.UpsertSettings(userID, req); err != nil {
+	deviceID := req.DeviceID
+	if userID == "" && deviceID == "" {
+		return utils.ResponseError(c, http.StatusUnauthorized, "User ID or Device ID is required", nil)
+	}
+
+	if err := h.service.UpsertSettings(userID, deviceID, req); err != nil {
 		return utils.ResponseError(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
@@ -53,8 +58,13 @@ func (h *UserSettingsHandler) UpsertSettings(c echo.Context) error {
 // @Router /sync/settings [get]
 func (h *UserSettingsHandler) GetSettings(c echo.Context) error {
 	userID := utils.GetUserIDFromContext(c)
+	deviceID := c.QueryParam("device_id")
 
-	settings, err := h.service.GetSettings(userID)
+	if userID == "" && deviceID == "" {
+		return utils.ResponseError(c, http.StatusUnauthorized, "User ID or Device ID is required", nil)
+	}
+
+	settings, err := h.service.GetSettings(userID, deviceID)
 	if err != nil {
 		return utils.ResponseError(c, http.StatusInternalServerError, err.Error(), nil)
 	}
