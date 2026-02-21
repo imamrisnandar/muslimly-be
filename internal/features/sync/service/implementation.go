@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"muslimly-be/internal/features/sync/dto"
 	"muslimly-be/internal/features/sync/model"
 	"muslimly-be/internal/features/sync/repository"
@@ -18,14 +19,42 @@ func NewSyncService(repo repository.SyncRepository, config *config.Config) SyncS
 	return &syncService{repo, config}
 }
 
-func (s *syncService) UpsertReading(userID string, req dto.UpsertReadingRequest) error {
-	uid, err := uuid.Parse(userID)
+// resolveIdentity parses userID and deviceID strings into UUID pointers.
+// At least one must be valid. Returns (userUUID, deviceUUID, error).
+func resolveIdentity(userID, deviceID string) (*uuid.UUID, *uuid.UUID, error) {
+	var uid *uuid.UUID
+	var did *uuid.UUID
+
+	if userID != "" {
+		parsed, err := uuid.Parse(userID)
+		if err == nil {
+			uid = &parsed
+		}
+	}
+
+	if deviceID != "" {
+		parsed, err := uuid.Parse(deviceID)
+		if err == nil {
+			did = &parsed
+		}
+	}
+
+	if uid == nil && did == nil {
+		return nil, nil, errors.New("either user_id or device_id is required")
+	}
+
+	return uid, did, nil
+}
+
+func (s *syncService) UpsertReading(userID string, deviceID string, req dto.UpsertReadingRequest) error {
+	uid, did, err := resolveIdentity(userID, deviceID)
 	if err != nil {
 		return err
 	}
 
 	history := &model.ReadingHistory{
 		UserID:     uid,
+		DeviceID:   did,
 		SurahID:    req.SurahID,
 		AyahNumber: req.AyahNumber,
 		PageNumber: req.PageNumber,
@@ -40,30 +69,36 @@ func (s *syncService) UpsertReading(userID string, req dto.UpsertReadingRequest)
 	return s.repo.UpsertReading(history)
 }
 
-func (s *syncService) GetReadingHistory(userID string) ([]dto.ReadingHistoryResponse, error) {
-	histories, err := s.repo.GetReadingHistory(userID, 10) // Limit 10 recent
+func (s *syncService) GetReadingHistory(userID string, deviceID string) ([]dto.ReadingHistoryResponse, error) {
+	histories, err := s.repo.GetReadingHistory(userID, deviceID, 10) // Limit 10 recent
 	if err != nil {
 		return nil, err
 	}
 
 	var responses []dto.ReadingHistoryResponse
 	for _, h := range histories {
-		responses = append(responses, dto.ReadingHistoryResponse{
+		resp := dto.ReadingHistoryResponse{
 			ID:         h.ID.String(),
-			UserID:     h.UserID.String(),
 			SurahID:    h.SurahID,
 			AyahNumber: h.AyahNumber,
 			PageNumber: h.PageNumber,
 			Mode:       h.Mode,
 			LastReadAt: h.LastReadAt,
-		})
+		}
+		if h.UserID != nil {
+			resp.UserID = h.UserID.String()
+		}
+		if h.DeviceID != nil {
+			resp.DeviceID = h.DeviceID.String()
+		}
+		responses = append(responses, resp)
 	}
 
 	return responses, nil
 }
 
-func (s *syncService) BulkInsertActivities(userID string, req dto.BulkActivityRequest) error {
-	uid, err := uuid.Parse(userID)
+func (s *syncService) BulkInsertActivities(userID string, deviceID string, req dto.BulkActivityRequest) error {
+	uid, did, err := resolveIdentity(userID, deviceID)
 	if err != nil {
 		return err
 	}
@@ -72,6 +107,7 @@ func (s *syncService) BulkInsertActivities(userID string, req dto.BulkActivityRe
 	for _, item := range req.Activities {
 		activities = append(activities, model.ReadingActivity{
 			UserID:          uid,
+			DeviceID:        did,
 			Date:            item.Date,
 			DurationSeconds: item.DurationSeconds,
 			PageNumber:      item.PageNumber,

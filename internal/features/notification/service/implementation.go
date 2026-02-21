@@ -40,14 +40,14 @@ func NewNotificationService(repo repository.DeviceRepository, config *config.Con
 	return &notificationService{repo, config, client}
 }
 
-func (s *notificationService) RegisterDevice(userID string, req dto.RegisterDeviceRequest) error {
+func (s *notificationService) RegisterDevice(userID string, req dto.RegisterDeviceRequest) (*model.UserDevice, error) {
 	var uid *uuid.UUID
 
 	// Only parse if userID is not empty (Logged In)
 	if userID != "" {
 		parsed, err := uuid.Parse(userID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		uid = &parsed
 	}
@@ -64,7 +64,11 @@ func (s *notificationService) RegisterDevice(userID string, req dto.RegisterDevi
 		Timezone:        req.Timezone,
 	}
 
-	return s.repo.UpsertDevice(device)
+	if err := s.repo.UpsertDevice(device); err != nil {
+		return nil, err
+	}
+
+	return device, nil
 }
 
 func (s *notificationService) SendDailyReminder() error {

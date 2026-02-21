@@ -66,9 +66,9 @@ func (r *Router) RegisterRoutes(
 		users.POST("/list", userHandler.GetData)
 	}
 
-	// Protected Routes (Sync)
+	// Sync Routes (Supports both logged-in users and guests via device_id)
 	sync := v1.Group("/sync")
-	sync.Use(customMiddleware.JWTMiddleware(r.config))
+	sync.Use(customMiddleware.OptionalJWTMiddleware(r.config))
 
 	// Sync Limit (User Based)
 	syncRate := r.config.RateLimit.Sync

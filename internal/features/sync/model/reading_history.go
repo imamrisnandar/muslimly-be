@@ -8,13 +8,14 @@ import (
 )
 
 type ReadingHistory struct {
-	ID         uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	UserID     uuid.UUID `gorm:"type:uuid;index:idx_user_surah,unique;not null"`
-	SurahID    int       `gorm:"index:idx_user_surah,unique;not null"`
-	AyahNumber int       `gorm:"not null"`
-	PageNumber int       `gorm:"default:0"`
-	Mode       string    `gorm:"default:'mushaf'"`     // 'mushaf' or 'list'
-	LastReadAt time.Time `gorm:"autoCreateTime:false"` // Manually set or updated
+	ID         uuid.UUID  `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	UserID     *uuid.UUID `gorm:"type:uuid;index"` // Nullable for guest
+	DeviceID   *uuid.UUID `gorm:"type:uuid;index"` // Links to user_devices.id
+	SurahID    int        `gorm:"not null"`
+	AyahNumber int        `gorm:"not null"`
+	PageNumber int        `gorm:"default:0"`
+	Mode       string     `gorm:"default:'mushaf'"`     // 'mushaf' or 'list'
+	LastReadAt time.Time  `gorm:"autoCreateTime:false"` // Manually set or updated
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`

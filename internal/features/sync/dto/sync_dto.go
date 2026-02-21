@@ -3,6 +3,7 @@ package dto
 import "time"
 
 type UpsertReadingRequest struct {
+	DeviceID   string `json:"device_id"` // Device UUID for guest sync
 	SurahID    int    `json:"surah_id" validate:"required"`
 	AyahNumber int    `json:"ayah_number" validate:"required"`
 	PageNumber int    `json:"page_number"`
@@ -22,12 +23,14 @@ type ReadingActivityRequest struct {
 }
 
 type BulkActivityRequest struct {
+	DeviceID   string                   `json:"device_id"` // Device UUID for guest sync
 	Activities []ReadingActivityRequest `json:"activities" validate:"required,dive"`
 }
 
 type ReadingHistoryResponse struct {
 	ID         string    `json:"id"`
-	UserID     string    `json:"user_id"`
+	UserID     string    `json:"user_id,omitempty"`
+	DeviceID   string    `json:"device_id,omitempty"`
 	SurahID    int       `json:"surah_id"`
 	AyahNumber int       `json:"ayah_number"`
 	PageNumber int       `json:"page_number"`

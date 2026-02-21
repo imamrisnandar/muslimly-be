@@ -17,36 +17,43 @@ func NewSyncRepository(db *gorm.DB) SyncRepository {
 }
 
 func (r *syncRepository) UpsertReading(history *model.ReadingHistory) error {
-	// Use GORM Clauses for Upsert
-	// Requires unique index on (user_id, surah_id)
 	history.LastReadAt = time.Now()
 
-	// If conflict on (user_id, surah_id), update all progress fields
-	return r.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "user_id"}, {Name: "surah_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"ayah_number", "page_number", "mode", "last_read_at", "updated_at"}),
-	}).Create(history).Error
+	// Determine conflict columns based on identity
+	if history.UserID != nil {
+		// Logged-in user: upsert based on (user_id, surah_id)
+		return r.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "user_id"}, {Name: "surah_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"ayah_number", "page_number", "mode", "last_read_at", "updated_at", "device_id"}),
+		}).Create(history).Error
+	} else if history.DeviceID != nil {
+		// Guest: upsert based on (device_id, surah_id)
+		return r.db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "device_id"}, {Name: "surah_id"}},
+			DoUpdates: clause.AssignmentColumns([]string{"ayah_number", "page_number", "mode", "last_read_at", "updated_at"}),
+		}).Create(history).Error
+	}
+
+	// Fallback: just insert
+	return r.db.Create(history).Error
 }
 
-func (r *syncRepository) GetReadingHistory(userID string, limit int) ([]model.ReadingHistory, error) {
+func (r *syncRepository) GetReadingHistory(userID string, deviceID string, limit int) ([]model.ReadingHistory, error) {
 	var histories []model.ReadingHistory
-	err := r.db.Where("user_id = ?", userID).
-		Order("last_read_at desc").
-		Limit(limit).
-		Find(&histories).Error
+	query := r.db.Order("last_read_at desc").Limit(limit)
+
+	if userID != "" {
+		query = query.Where("user_id = ?", userID)
+	} else if deviceID != "" {
+		query = query.Where("device_id = ?", deviceID)
+	} else {
+		return histories, nil // No identity, return empty
+	}
+
+	err := query.Find(&histories).Error
 	return histories, err
 }
 
 func (r *syncRepository) UpsertActivities(activities []model.ReadingActivity) error {
-	// Batch Insert. We assume these are logs.
-	// If mobile sends same log twice, we might want to avoid dupes?
-	// Mobile has 'id' but it is local sqlite ID.
-	// We can use (user_id, timestamp) as unique key? Or just append?
-	// For now, let's just append or maybe use simple unique constraint on timestamp if critical.
-	// But users might read multiple times in same second (unlikely but possible via batch sync).
-	// Let's rely on client not sending duplicates or standard ID generation.
-	// Actually, best practice is to have a unique ID or composite key.
-	// Let's assume we just insert for now. Mobile DB has ID, we could map it if we want strict sync.
-
 	return r.db.Create(&activities).Error
 }

@@ -37,11 +37,14 @@ func (h *NotificationHandler) RegisterDevice(c echo.Context) error {
 		return utils.ResponseError(c, http.StatusBadRequest, utils.ErrInvalidRequest, nil)
 	}
 
-	if err := h.service.RegisterDevice(userID, req); err != nil {
+	device, err := h.service.RegisterDevice(userID, req)
+	if err != nil {
 		return utils.ResponseError(c, http.StatusInternalServerError, err.Error(), nil)
 	}
 
-	return utils.ResponseSuccess(c, http.StatusOK, "Device registered", nil)
+	return utils.ResponseSuccess(c, http.StatusOK, "Device registered", map[string]string{
+		"device_id": device.ID.String(),
+	})
 }
 
 // TestBroadcast godoc
